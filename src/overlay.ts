@@ -3,6 +3,7 @@ import { onDriverClick } from "./events";
 import { emit } from "./emitter";
 import { getConfig } from "./config";
 import { getState, setState } from "./state";
+import { setElementWidthAndHeight, setStepPadding } from "./custom-patch";
 
 export type StageDefinition = {
   x: number;
@@ -13,11 +14,15 @@ export type StageDefinition = {
 
 // This method calculates the animated new position of the
 // stage (called for each frame by requestAnimationFrame)
-export function transitionStage(elapsed: number, duration: number, from: Element, to: Element) {
+export function transitionStage(elapsed: number, duration: number, from: Element, to: Element, isFirstHighlight: boolean) {
   let activeStagePosition = getState("__activeStagePosition");
 
-  const fromDefinition = activeStagePosition ? activeStagePosition : from.getBoundingClientRect();
-  const toDefinition = to.getBoundingClientRect();
+  let fromDefinition = activeStagePosition ? activeStagePosition : from.getBoundingClientRect();
+
+  // 如果步骤中设置了 width和height 那么使用步骤中的width 生成遮罩
+  let toDefinition = setElementWidthAndHeight(to);
+  // 如果是第一步 那么设置一样
+  isFirstHighlight && (fromDefinition = toDefinition)
 
   const x = easeInOutQuad(elapsed, fromDefinition.x, toDefinition.x - fromDefinition.x, duration);
   const y = easeInOutQuad(elapsed, fromDefinition.y, toDefinition.y - fromDefinition.y, duration);
@@ -40,7 +45,8 @@ export function trackActiveElement(element: Element) {
     return;
   }
 
-  const definition = element.getBoundingClientRect();
+  // 如果步骤中设置了 width和height 那么使用步骤中的width 生成遮罩
+  let definition = setElementWidthAndHeight(element);
 
   const activeStagePosition: StageDefinition = {
     x: definition.x,
@@ -149,7 +155,9 @@ function generateStageSvgPathString(stage: StageDefinition) {
   const windowX = window.innerWidth;
   const windowY = window.innerHeight;
 
-  const stagePadding = getConfig("stagePadding") || 0;
+  // 如果步骤中设置了 边距 那么使用步骤中的 边距
+  const stagePadding = setStepPadding();
+
   const stageRadius = getConfig("stageRadius") || 0;
 
   const stageWidth = stage.width + stagePadding * 2;

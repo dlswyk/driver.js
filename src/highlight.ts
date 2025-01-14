@@ -4,6 +4,7 @@ import { getConfig } from "./config";
 import { hidePopover, renderPopover, repositionPopover } from "./popover";
 import { bringInView } from "./utils";
 import { getState, setState } from "./state";
+import { setCurStepPopover } from "./custom-patch";
 
 function mountDummyElement(): Element {
   const existingDummy = document.getElementById("driver-dummy-element");
@@ -29,6 +30,7 @@ function mountDummyElement(): Element {
 
 export function highlight(step: DriveStep) {
   const { element } = step;
+  setCurStepPopover(step.popover)
   let elemObj = typeof element === "string" ? document.querySelector(element) : element;
 
   // If the element is not found, we mount a 1px div
@@ -122,7 +124,7 @@ function transferHighlight(toElement: Element, toStep: DriveStep) {
     }
 
     if (getConfig("animate") && elapsed < duration) {
-      transitionStage(elapsed, duration, fromElement, toElement);
+      transitionStage(elapsed, duration, fromElement, toElement, isFirstHighlight);
     } else {
       trackActiveElement(toElement);
 

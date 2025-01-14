@@ -4,6 +4,7 @@ import { getState, setState, State } from "./state";
 import { DriveStep } from "./driver";
 import { onDriverClick } from "./events";
 import { emit } from "./emitter";
+import { setElementWidthAndHeight, setStepPadding } from "./custom-patch";
 
 export type Side = "top" | "right" | "bottom" | "left" | "over";
 export type Alignment = "start" | "center" | "end";
@@ -246,7 +247,8 @@ function getPopoverDimensions(): PopoverDimensions | undefined {
 
   const boundingClientRect = popover.wrapper.getBoundingClientRect();
 
-  const stagePadding = getConfig("stagePadding") || 0;
+  // 如果步骤中设置了 边距 那么使用步骤中的 边距
+  const stagePadding = setStepPadding();
   const popoverOffset = getConfig("popoverOffset") || 0;
 
   return {
@@ -358,11 +360,14 @@ export function repositionPopover(element: Element, step: DriveStep) {
   // Configure the popover positioning
   const requiredAlignment: Alignment = align;
   const requiredSide: Side = element.id === "driver-dummy-element" ? "over" : side;
-  const popoverPadding = getConfig("stagePadding") || 0;
+
+  // 如果步骤中设置了 边距 那么使用步骤中的 边距
+  const popoverPadding = setStepPadding();
 
   const popoverDimensions = getPopoverDimensions()!;
   const popoverArrowDimensions = popover.arrow.getBoundingClientRect();
-  const elementDimensions = element.getBoundingClientRect();
+  // 如果步骤中设置了 width和height 那么使用步骤中的width 生成遮罩
+  let elementDimensions = setElementWidthAndHeight(element);
 
   const topValue = elementDimensions.top - popoverDimensions!.height;
   let isTopOptimal = topValue >= 0;
@@ -499,7 +504,9 @@ function renderPopoverArrow(alignment: Alignment, side: Side, element: Element) 
     return;
   }
 
-  const elementDimensions = element.getBoundingClientRect();
+  // 如果步骤中设置了 width和height 那么使用步骤中的width 生成遮罩
+  let elementDimensions = setElementWidthAndHeight(element);
+
   const popoverDimensions = getPopoverDimensions()!;
   const popoverArrow = popover.arrow;
 
